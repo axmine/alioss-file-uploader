@@ -1,12 +1,123 @@
+import OSS from 'ali-oss'
 export default class Base {
-  constructor (props) {
-    this.options = props
-    // this.multiple = props.multiple
-    // this.accept = props.accept
-    // this.size = props.size
-    // this.limit = props.limit
+  constructor (props) { this.options = props }
+
+  /**
+   * 执行上传
+   */
+  async create (blobs, sts, callBack) {
+    // 1. 生成文件列表
+    const list = this.createList(blobs)
+    // 2. 获取STS参数
+    const { config, files } = await this.getSts(sts, list)
+    // 3. 初始化OSS
+    const alioss = new OSS(config)
+    // 4. 开始上传列表
+    list.forEach((e, i) => {
+      e.upName = `${files[i]}.${e.extName}`
+      this.files[i].name = `${files[i]}.${e.extName}`
+      this.multipartUpload(e, callBack, alioss)
+    })
   }
 
+  // 分片上传方法
+  async multipartUpload (e, fn, alioss) {
+    const _this = this
+    // 开始上传
+    const { name, res } = await alioss.multipartUpload(e.upName, e.blob, {
+      partSize: _this.setPartSize(e.blob),
+      progress: async function (progress, checkpoint) {
+        _this.files[e.index].progress = Math.floor(progress * 100)
+        _this.files[e.index].checkpoint = checkpoint
+        fn && fn({
+          status: 'loading',
+          file: _this.files[e.index],
+          list: _this.files
+        })
+      }
+    })
+
+    // 处理结果
+    if (name && res.status * 1 === 200) {
+      const url = res.requestUrls[0]
+      const i = url.indexOf(name)
+      let file = url.slice(0, i) + name
+      if (this.options.https && file.indexOf('https:') !== 0) {
+        file = 'https:' + url.slice(5)
+      }
+      this.files[e.index].url = file
+      fn && fn({
+        status: 'complete',
+        file: this.files[e.index],
+        list: this.files
+      })
+      // 标记为已完成
+      this.files[e.index].complete = true
+      // 检查是否全部完成了
+      // this.files.forEach(e => e.complete)
+      // if (!this.files.some(e => e.complete === false)) {
+      //   fileInput.removeEventListener('change')
+      // }
+    } else {
+      const err = { status: false, message: '文件上传失败，请重试' }
+      throw err
+    }
+  }
+
+  // 生成上传列表及回调列表
+  createList (blobs) {
+    const files = []
+    Object.keys(blobs).forEach(i => {
+      files.push({
+        index: i,
+        blob: blobs[i],
+        size: blobs[i].size,
+        orgName: blobs[i].name,
+        extName: '.jpg',
+        upName: '',
+        url: '',
+        progress: 0,
+        checkpoint: null
+      })
+      this.files.push({
+        index: i,
+        progress: 0,
+        size: blobs[i].size,
+        file: blobs[i].name,
+        name: '',
+        url: '',
+        checkpoint: null,
+        complete: false
+      })
+    })
+    return files
+  }
+
+  // 获取 sts 参数
+  async getSts (sts, list) {
+    let config = {}
+    let files = []
+    switch (this.getTypeOf(sts)) {
+      case 'function': {
+        const blobs = []
+        list.forEach(e => blobs.push({ size: e.size, name: e.orgName }))
+        const res = await sts(blobs)
+        config = res.config
+        files = res.files
+        break
+      }
+      case 'object':
+        config = sts.config
+        files = sts.files
+        break
+    }
+    if (!config.stsToken || files.length < 1) {
+      throw new Error('STS参数错误，请传入正确的OSS参数')
+    }
+    return { config, files }
+  }
+
+  // 执行文件检查
   async doVaildate (blobs) {
     // blobs.forEach(blob => {
     for (let i = 0; i < blobs.length; i++) {
@@ -21,7 +132,7 @@ export default class Base {
     }
   }
 
-  // 验证用户所选文件是否符合要求的文件类型
+  // 验证文件类型
   vaildateFileType (blob) {
     let bool = this.options.accept === ''
     if (this.options.accept !== '') {
@@ -49,7 +160,7 @@ export default class Base {
     return bool
   }
 
-  // 校验文件大小是否符合规范
+  // 校验文件大小
   vaildateFileLimit (blob) {
     const { min, max, oMin, oMax, oUnit } = this.options.limit
     let bool = true
@@ -94,12 +205,13 @@ export default class Base {
       bool = true
     // 3. 限定宽高, 并处理相应的缩放和误差
     } else {
-      this.handleLimit({ width, height, error, scale, realHeight, realWidth })
+      this.handleSizeLimit({ width, height, error, scale, realHeight, realWidth })
     }
     return bool
   }
 
-  handleLimit ({ width, height, error, scale, realHeight, realWidth }) {
+  // 处理图片的尺寸限制
+  handleSizeLimit ({ width, height, error, scale, realHeight, realWidth }) {
     let bool = false
     const err = { status: false, message: '' }
     // 1、无误差时，计算宽高比是否一致
@@ -175,7 +287,7 @@ export default class Base {
     return bool
   }
 
-  // 验证误差是否在合理范围内
+  // 验证图片误差
   vaildateError ({ realWidth, realHeight, width, height, error }) {
     let minScale = 0
     let maxScale = 0
@@ -212,7 +324,7 @@ export default class Base {
     return status
   }
 
-  // 验证图片比例是否在合理范围内
+  // 验证图片比例
   vaildateAspectRatio ({ realWidth, realHeight, width, height, aspectRatio }) {
     const ratio = aspectRatio.split(':')
     let bool = false
@@ -249,7 +361,7 @@ export default class Base {
     return bool
   }
 
-  // 计算图片的实际尺寸
+  // 计算图片实际尺寸
   computeImageSize (img) {
     const blob = URL.createObjectURL(img)
     const image = document.createElement('img')
