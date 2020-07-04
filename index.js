@@ -9,7 +9,6 @@ export class Alioss extends Base {
       multiple: false
     }
     super(options)
-    this.files = []
   }
 
   // 创建上传方法
@@ -31,7 +30,7 @@ export class Alioss extends Base {
         // 2. 开始上传
         _this.create(blobs, sts, callBack)
       } catch (err) {
-        console.log(err)
+        throw err
       }
     })
   }
