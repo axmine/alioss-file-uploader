@@ -1,6 +1,9 @@
 import OSS from 'ali-oss'
 export default class Base {
-  constructor (props) { this.options = props }
+  constructor (props) {
+    this.options = props
+    this.files = []
+  }
 
   /**
    * 执行上传
@@ -102,8 +105,10 @@ export default class Base {
         const blobs = []
         list.forEach(e => blobs.push({ size: e.size, name: e.orgName }))
         const res = await sts(blobs)
-        config = res.config
-        files = res.files
+        if (res) {
+          config = res.config
+          files = res.files
+        }
         break
       }
       case 'object':
