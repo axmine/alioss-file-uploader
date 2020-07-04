@@ -31,15 +31,6 @@ function upload() {
   oss.upload(fetchSts, callBack)
 }
 
-// 上传过程中被触发的回调方法, 返回文件上传状态及信息
-function callBack({ status, file, list }) {
-  // 返回当前上传文件的状态 loading || complete
-  console.log(`status: ${status}`)
-  // 文件上传进度
-  console.log(file)
-  // 全部上传文件信息
-  console.log(list)
-}
 ```
 # methods: upload(fetchSts, callBack, [option])
 
