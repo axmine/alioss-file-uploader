@@ -28,7 +28,7 @@ html
 ```
 js
 ```javascript
-import Alioss from 'alioss-file-uploader'
+import { Alioss } from 'alioss-file-uploader'
 
 function upload() {
   const oss = new Alioss()
@@ -126,4 +126,43 @@ function callBack({ status, file, list }) {
 { size: { width: 100, height: 200, error: 0.1 } }
 // 例 10： 图片尺寸最小 100*200px, 最大300*600px, 并允许 5% 的误差
 { size: { width: 100, height: 200, scale: 3, error: 0.05 } }
+```
+
+## change log
+1. 修复大量bug
+2. callBack 增加错误代码
+### classBack 返回数据格式如下：
+```javascript
+// 上传中：
+{
+  status: 'loading'
+  list: {}, // 当前正在上传的文件的信息
+  lists: [] // 当前正在上传所有文件信息
+}
+
+// 上传成功
+{
+  status: 'complete',
+  list: {}, // 当前正在上传的文件的信息
+  lists: [] // 当前正在上传所有文件信息
+}
+
+// 上传失败
+{
+  status: 'error',
+  message: '具体错误信息’,
+  ..., // 这里还会根据不同的错误代码返回不同的数据。
+  code: 1, // 错误代码
+}
+// 错误代码具体含义如下：
+//   0: '文件类型不符合要求，请重新选择',
+//   1: '该文件似乎是一个空文件，暂不支持空文件上传',
+//   2: '文件太大，应介于最小值与最大值之间',
+//   3: '文件太大，不得大于最大值',
+//   4: '文件太小，应介于最小值与最大值之间',
+//   5: '文件太小，不得小于最小值',
+//   6: '此错误代码暂未定义'
+//   7: '图片尺寸不符',
+//   8: '图片误差过大',
+//   9: '文件上传失败'
 ```
