@@ -1,36 +1,48 @@
-import Base from './src/base.js'
-export class Alioss extends Base {
+import { formatAccept, formatLimit, formatSize, createInput, doVaildate, createUploader } from './src/utils'
+//   0: '文件类型不符合要求，请重新选择',
+//   1: '该文件似乎是一个空文件，暂不支持空文件上传',
+//   2: '文件太大，应介于最小值与最大值之间',
+//   3: '文件太大，不得大于最大值',
+//   4: '文件太小，应介于最小值与最大值之间',
+//   5: '文件太小，不得小于最小值',
+//   6: '此错误代码暂未定义'
+//   7: '图片尺寸不符',
+//   8: '图片误差过大',
+//   9: '文件上传失败'
+export class Alioss {
   constructor () {
-    const options = {
+    this.options = {
       accept: '',
       size: { width: 0, height: 0, scale: 1, aspectRatio: '', error: 0 },
       limit: { min: 0, max: 10, unit: 'mb' },
       https: true,
       multiple: false
     }
-    super(options)
   }
 
-  // 创建上传方法
-  async upload (sts, callBack, options = this.options) {
+  upload (sts, callBack, options = this.options) {
+    // 1. merge options
     Object.assign(this.options, options)
-    // 格式化参数
-    this.options.size = this.formatSize(this.options.size)
-    this.options.limit = this.formatLimit(this.options.limit)
-    this.options.accept = this.formatAccept(this.options.accept)
-    // 创建元素
-    const fileInput = this.createInput()
-    fileInput.click()
+    // 2. format values
+    Object.assign(this.options, {
+      size: formatSize(this.options.size),
+      accept: formatAccept(this.options.accept),
+      limit: formatLimit(this.options.limit)
+    })
+    // 3. create input
+    const input = createInput(options)
+    input.click()
     const _this = this
-    fileInput.addEventListener('change', async function (e) {
+    input.addEventListener('change', async function (e) {
       const blobs = e.path[0].files
       try {
-        // 1. 检查文件类型，大小，尺寸是否合法
-        await _this.doVaildate(blobs)
-        // 2. 开始上传
-        _this.create(blobs, sts, callBack)
+        // 3-1. vaildate files
+        await doVaildate(blobs, _this.options)
+        // 3-2. upload file
+        createUploader(blobs, sts, callBack, _this.options)
       } catch (err) {
-        throw err
+        // throw err
+        callBack(Object.assign(err, { status: 'error' }))
       }
     })
   }
