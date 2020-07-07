@@ -1,21 +1,5 @@
-# alioss-file-uploader 【Ali-oss 文件 web 端直传插件]
-## A plugin of upload file directly from webClient to ali-oss servers
-
-### 特性
-- 支持文件类型验证
-- 支持文件大小验证
-- 支持多文件同时上传
-- 通过配置项，可支持图片进行尺寸验证，可限制图片宽高比, 支持宽高误差值.
-- 微信浏览器下正常工作
-- 微信小程序端 webview 组件内的html页面也可正常上传图片
-- 建议sts临时授权上传，文件名由服务器派发，可有效控制文件重名导致被覆盖的问题。
-
-### 内部工作步骤
-1. 创建 \<input type="file"\> 文件选择器
-2. 监听 change 事件
-3. 执行文件校验（验证文件的类型，大小，尺寸）
-4. 初始化 oss
-5. 开始上传文件并触发回调, 实时返回上传状态及进度
+# Ali-oss 文件 web 端直传插件
+### A plugin of upload file directly from webClient to ali-oss servers
 
 ## 使用方法
 安装
@@ -36,16 +20,34 @@ function upload() {
 }
 
 ```
-# methods: upload(fetchSts, callBack, [option])
+### 特性
+- 支持文件类型验证
+- 支持文件大小验证
+- 支持多文件同时上传
+- 通过配置项，可支持图片进行尺寸验证，可限制图片宽高比, 支持宽高误差值.
+- 微信浏览器下正常工作
+- 微信小程序端 webview 组件内的html页面也可正常上传图片
+- 建议sts临时授权上传，文件名由服务器派发，可有效控制文件重名导致被覆盖的问题。
+- 实时的上传状态及进度反馈，减少用户的等待焦虑感
 
-## fetchSts: { object | function }
-1. 当 fetchSts 为 function 时, 请定义为异步函数，OSS 在初始化阶段会调用并将要上传的文件列表返回，fetchSts执行后请返回 { config: {}, files: [] }
-2. 如果 fetchSts 为 object 时，请直接提供以下格式的数据
+### 内部工作步骤
+1. 创建 \<input type="file"\> 文件选择器
+2. 监听 input 的 change 事件
+3. 执行文件校验（验证文件的类型，大小，尺寸）
+4. 初始化 oss
+5. 开始上传文件并触发回调, 实时返回上传状态及进度
+
+# methods: upload(sts, callBack, [option])
+
+## sts: { object | function }
+1. 当 sts 为 function 时, 请定义为异步函数，OSS 在初始化阶段会调用并将要上传的文件列表返回，sts执行后请返回 { config: {}, files: [] }
+2. 如果 sts 为 object 时，请直接提供以下格式的数据
 
 具体返回内容
 ```javascript
 {
-  // 后端使用 ali-oss 提供的sdk， 获取以下数据
+  // 建议 config 及 files 由后端提供， 提高安全性的同时，还能为前端分配上传文件的名称，有效避免因文件重名被覆盖的风险。
+  // 后端请使用 ali-oss 提供的sdk， 获取以下数据
   config: {
     accessKeyId: '',
     accessKeySecret: '',
