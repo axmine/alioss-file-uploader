@@ -1,6 +1,6 @@
 {
   "name": "alioss-file-uploader",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "to upload file by ali-oss in frontend page",
   "main": "index.js",
   "scripts": {
@@ -23,6 +23,7 @@
   },
   "homepage": "https://github.com/Yocss/alioss-file-uploader#readme",
   "dependencies": {
+    "@types/ali-oss": "^6.0.5",
     "ali-oss": "^6.9.1"
   }
 }
