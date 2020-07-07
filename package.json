@@ -1,6 +1,6 @@
 {
   "name": "alioss-file-uploader",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "to upload file by ali-oss in frontend page",
   "main": "index.js",
   "scripts": {
