@@ -1,7 +1,9 @@
-import OSS from 'ali-oss'
+import * as OSS from 'ali-oss'
+import { Sts, StsConfig, OptionsSize, OptionsLimit, OptionsLimitOutPut, Options, realImageSize } from './Dto/Types.dto'
 const lists = []
+
 // 格式化 options.size 的值
-export function formatSize(size) {
+export function formatSize(size: OptionsSize):OptionsSize {
   const s = Object.assign({ width: 0, height: 0, scale: 1, error: 0, aspectRatio: '' }, size)
   const { height = 0, width = 0, scale = 1, error = 0, aspectRatio = '' } = s
   if (height < 0 || width < 0) {
@@ -48,7 +50,7 @@ export function formatSize(size) {
 }
 
 // 格式化 options.limit 的值
-export function formatLimit(val) {
+export function formatLimit(val: OptionsLimit): OptionsLimitOutPut {
   const { min = 0, max = 0, unit = 'mb' } = val
   if (getTypeOf(min) !== 'number' || getTypeOf(max) !== 'number') {
     throw new Error('min or max must be number')
@@ -74,7 +76,7 @@ export function formatLimit(val) {
 }
 
 // 格式化 options.accept 的值
-export function formatAccept(val) {
+export function formatAccept(val: string | Array<string>): string | Array<string> {
   let accept = val
   if (Array.isArray(accept)) {
     for (let i = 0; i < accept.length; i++) {
@@ -93,7 +95,7 @@ export function formatAccept(val) {
 }
 
 // 执行检查
-export async function doVaildate (blobs, options) {
+export async function doVaildate (blobs, options): Promise<void> {
   // blobs.forEach(blob => {
   for (let i = 0; i < blobs.length; i++) {
     // 1、校验文件类型是否符合
@@ -108,7 +110,7 @@ export async function doVaildate (blobs, options) {
 }
 
 // 创建 <input type="file" />对象
-export function createInput (options) {
+export function createInput (options: Options): any {
   const fileInput = document.createElement('input')
   fileInput.type = 'file'
   if (options.multiple) { fileInput.multiple = true }
@@ -123,6 +125,7 @@ export async function createUploader (blobs, sts, callBack, options) {
   // 3. 初始化OSS
   const alioss = new OSS(config)
   // 4. 开始上传列表
+  lists.length = 0
   list.forEach((e, i) => {
     e.upName = `${files[i]}.${e.extName}`
     lists.push({
@@ -181,7 +184,7 @@ async function multipartUpload (e, fn, alioss, options) {
     const i = url.indexOf(name)
     let file = url.slice(0, i) + name
     if (options.https && file.indexOf('https:') !== 0) {
-      file = 'https:' + file.slice(5)
+      file = 'https:' + url.slice(5)
     }
     lists[e.index].url = file
     fn && fn({
@@ -199,17 +202,17 @@ async function multipartUpload (e, fn, alioss, options) {
     const err = {
       status: 'error',
       code: 9,
-      message: '文件上传失败，请重试',
       file: lists[e.index],
-      list: lists
+      list: lists,
+      message: '文件上传失败，请重试'
     }
     throw err
   }
 }
 
-async function getSts (sts, list) {
-  let config = {}
-  let files = []
+async function getSts (sts, list): Promise<Sts> {
+  let config: StsConfig
+  let files: Array<string> = []
   switch (getTypeOf(sts)) {
     case 'function': {
       const blobs = []
@@ -233,7 +236,7 @@ async function getSts (sts, list) {
 }
 
 // 验证文件类型
-function vaildateFileType (blob, options) {
+function vaildateFileType (blob, options: Options): boolean {
   let bool = options.accept === ''
   if (options.accept !== '') {
     const { type, name } = blob
@@ -247,8 +250,8 @@ function vaildateFileType (blob, options) {
     if (!bool) {
       const err = {
         status: 'error',
-        message: '文件类型不符合',
         code: 0,
+        message: '文件类型不符合要求, 请重新选择',
         file: name
       }
       throw err
@@ -258,30 +261,36 @@ function vaildateFileType (blob, options) {
 }
 
 // 验证文件大小
-function vaildateFileLimit (blob, options) {
+function vaildateFileLimit (blob, options): boolean {
   const { min, max, oMin, oMax, oUnit } = options.limit
   let bool = true
   if (max > 0) {
     const { name, size } = blob
-    const err = { status: 'error', message: '', file: name, code: 1, limit: {
-      min: oMin,
-      max: oMax,
-      unit: oUnit
-    } }
+    const err = {
+      status: 'error',
+      code: 2,
+      file: name,
+      message: '',
+      limit: {
+        min: oMin,
+        max: oMax,
+        unit: oUnit
+      }
+    }
     // 禁止上传空文件
     if (size < 1) {
       bool = false
-      err.message = '所选文件为空'
+      err.message = '该文件似乎是一个空文件，不支持上传空文件'
       err.code = 1
     } else if (size > max) {
       bool = false
       const msg = oMin > 0 ? `应介于 ${oMin}-${oMax}${oUnit} 之间` : `不得大于 ${oMax}${oUnit}`
-      err.message = `文件太大，${msg}`
       err.code = oMin > 0 ? 2 : 3
+      err.message = `文件太大，${msg}`
     } else if (size < min) {
       bool = false
       err.message = `文件太小，应介于 ${oMin}-${oMax}${oUnit} 之间`
-      err.code = 4
+      err.code = oMax > 0 ? 4 : 5
     }
     if (!bool) { throw err }
   }
@@ -289,7 +298,7 @@ function vaildateFileLimit (blob, options) {
 }
 
 // 验证图片尺寸
-async function vaildateImageSize (blob, options) {
+async function vaildateImageSize (blob, options): Promise<boolean> {
   const { width, height, error, scale, aspectRatio } = options.size
   let bool = false
   const { realWidth, realHeight } = await computeImageSize(blob)
@@ -307,7 +316,7 @@ async function vaildateImageSize (blob, options) {
 }
 
 // 计算图片实际尺寸
-function computeImageSize (img) {
+function computeImageSize (img:Blob): Promise<realImageSize> {
   const blob = URL.createObjectURL(img)
   const image = document.createElement('img')
   image.src = blob
@@ -320,7 +329,8 @@ function computeImageSize (img) {
   })
 }
 
-function vaildateAspectRatio ({ realWidth, realHeight, width, height, aspectRatio }) {
+// 验证图片比例
+function vaildateAspectRatio ({ realWidth, realHeight, width, height, aspectRatio }): boolean {
   const ratio = aspectRatio.split(':')
   let bool = false
   let cw = width
@@ -350,15 +360,26 @@ function vaildateAspectRatio ({ realWidth, realHeight, width, height, aspectRati
     ch = Math.floor(w) * ratio[1]
   }
   if (!bool) {
-    const err = { status: 'error', code: 7, message: `图片比例不符：建议尺寸${cw}×${ch}px`, size: { width: cw, height: ch } }
+    const err = {
+      status: 'error',
+      message: `图片比例不符：建议尺寸${cw}×${ch}px`,
+      code: 7,
+      size: { width: cw, height: ch }
+    }
     throw err
   }
   return bool
 }
 
-function handleSizeLimit ({ width, height, error, scale, realHeight, realWidth }) {
+// 处理图片的尺寸限制
+function handleSizeLimit ({ width, height, error, scale, realHeight, realWidth }): boolean {
   let bool = false
-  const err = { status: 'error', message: '' }
+  const err = {
+    status: 'error',
+    code: 7,
+    message: '',
+    size: { width, height, error, scale }
+  }
   // 1、无误差时，计算宽高比是否一致
   if (error === 0) {
     let r1 = 0
@@ -420,10 +441,12 @@ function handleSizeLimit ({ width, height, error, scale, realHeight, realWidth }
   }
   if (!bool) {
     let message = `图片尺寸不符，建议尺寸：${width}×${height}px`
-    if (width === 0) { message = `图片尺寸不符，图片建议高度：${height}px` }
-    if (height === 0) { message = `图片尺寸不符，建议尺寸：${width}px` }
-    err.code = 7
-    err.size = { width, height }
+    if (width === 0) {
+      message = `图片尺寸不符，图片建议高度：${height}px`
+    }
+    if (height === 0) {
+      message = `图片尺寸不符，建议尺寸：${width}px`
+    }
     err.message = message
     throw err
   }
@@ -454,16 +477,25 @@ function vaildateError ({ realWidth, realHeight, width, height, error }) {
   }
   if (!status) {
     let message = `误差过大，建议尺寸：${width}×${height}px`
-    if (width === 0) { message = `误差过大，图片建议高度：${height}px` }
-    if (height === 0) { message = `误差过大，图片建议宽度：${width}px` }
-    const err = { status: 'error', message, code: 8,  size: { width, height } }
+    if (width === 0) {
+      message = `误差过大，图片建议高度：${height}px`
+    }
+    if (height === 0) {
+      message = `误差过大，图片建议宽度：${width}px`
+    }
+    const err = {
+      status: 'error',
+      message,
+      code: 8,
+      size: { width, height, error }
+    }
     throw err
   }
   return status
 }
 
 // 设置分片大小
-function setPartSize (blob) {
+function setPartSize (blob: Blob): number {
   const { size } = blob
   let num = 102400
   if (size > 512000 && size <= 5242880) {
@@ -474,11 +506,11 @@ function setPartSize (blob) {
   return num
 }
 
-function getTypeOf (val) {
+function getTypeOf (val: any): string {
   return (Object.prototype.toString.call(val).slice(8, -1)).toLowerCase()
 }
 
-function getExtName (name) {
+function getExtName (name: string): string {
   let res = ''
   const i = name.lastIndexOf('.')
   if (i > -1) { res = name.slice(i + 1) }

@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "module": "AMD",
+    "target": "es5",
+    "lib": ["DOM", "ES2015", "ScriptHost", "ES5"],
+    "outDir": "lib",
+    "types": ["ali-oss"]
+    // "noImplicitAny": true,
+    // "removeComments": true,
+    // "preserveConstEnums": true,
+    // "outFile": "lib/index.js",
+    // "sourceMap": true,
+    // "alwaysStrict": true
+  },
+}
