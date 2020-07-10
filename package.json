@@ -1,7 +1,7 @@
 {
   "name": "alioss-file-uploader",
-  "version": "0.0.6",
-  "description": "to upload file by ali-oss in frontend page",
+  "version": "0.0.7",
+  "description": "支持上传验证的web端直传阿里云OSS的文件上传工具",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -14,7 +14,12 @@
     "ali-oss",
     "alioss",
     "uploader",
-    "web-uploader"
+    "web-uploader",
+    "file-uploader",
+    "ali-oss-file",
+    "ali-oss-uploader",
+    "ali-oss-web",
+    "alioss-web"
   ],
   "author": "Yocss",
   "license": "MIT",
