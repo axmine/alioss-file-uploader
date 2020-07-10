@@ -1,5 +1,25 @@
 # Ali-oss 文件 web 端直传插件
+
 ### A plugin of upload file directly from webClient to ali-oss servers
+
+### 特性
+- 支持文件类型验证
+- 支持文件大小验证
+- 支持多文件同时上传
+- 通过配置项，可支持图片进行尺寸验证，可限制图片宽高比, 支持宽高误差值.
+- 微信浏览器下正常工作
+- 微信小程序端 webview 组件内的html页面也可正常上传图片
+- 实时的上传状态及进度反馈，减少用户的等待焦虑感
+- 支持vue、 react、angular等等，不依赖UI框架，实例化后调用upload方法即可
+
+注：强烈建议sts临时授权上传文件，上传文件名由服务器派发，确保安全的同时还可以有效地控制文件重名导致被覆盖的问题。 sts授权由后端生成，不会使用的后端同学请阅读阿里OSS官方文档：[使用STS进行临时授权](https://help.aliyun.com/document_detail/32077.html?spm=a2c4g.11186623.2.7.39ac5557xHshdZ#concept-32077-zh)
+
+### 内部工作步骤
+1. 创建 \<input type="file"\> 文件选择器
+2. 监听 input 的 change 事件
+3. 执行文件校验（验证文件的类型，大小，尺寸）
+4. 初始化 oss
+5. 开始上传文件并触发回调, 实时返回上传状态及进度
 
 ## 使用方法
 安装
@@ -20,22 +40,6 @@ function upload() {
 }
 
 ```
-### 特性
-- 支持文件类型验证
-- 支持文件大小验证
-- 支持多文件同时上传
-- 通过配置项，可支持图片进行尺寸验证，可限制图片宽高比, 支持宽高误差值.
-- 微信浏览器下正常工作
-- 微信小程序端 webview 组件内的html页面也可正常上传图片
-- 建议sts临时授权上传，文件名由服务器派发，可有效控制文件重名导致被覆盖的问题。
-- 实时的上传状态及进度反馈，减少用户的等待焦虑感
-
-### 内部工作步骤
-1. 创建 \<input type="file"\> 文件选择器
-2. 监听 input 的 change 事件
-3. 执行文件校验（验证文件的类型，大小，尺寸）
-4. 初始化 oss
-5. 开始上传文件并触发回调, 实时返回上传状态及进度
 
 # methods: upload(sts, callBack, [option])
 
@@ -63,12 +67,15 @@ function upload() {
   ]
 }
 ```
-fetchSts 示例
+sts 方法示例, 记住哦：当 sts 为 function 时，必须返回为一个 Promise
 ```javascript
 // 获取sts参数，用于实例化 Alioss 内部的OSS
 async function fetchSts(files) {
+  // 1. 向服务器获取参数
   const data = await getSts()
-  const { config, files } = data
+  // 2. 整理服务器返回的数据
+  const { config, files } = data 
+  // 3. 返回整好的结果
   return { config, files }
 }
 ```
@@ -79,8 +86,10 @@ status[string]: loading(上传中), complete(上传完成)， error(上传出现
 file[object]: 正在上传的文件，实时的上传进度0 - 100，文件名，存储在oss的路径等信息
 list[array]: 所有正在上传和已完成的文件的实时信息，具体内容和file一致。
 ```javascript
-function callBack({ status, file, list }) {
-  console.log(status, file, list)
+function callBack(params) {
+  // params.status 不为 'error' 的情况下，将会正常返回 { status, file, list }
+  // params.status 为 'error'时，会因为错误类型的不同而作出相应的改变。
+  console.log(params)
 }
 ```
 
@@ -109,7 +118,7 @@ function callBack({ status, file, list }) {
   multiple: false
 }
 ```
-示例：
+options 参数的部分示例：
 ```javascript
 // 例 01: 限制为只允许上传图片
 { accept: 'image' }
