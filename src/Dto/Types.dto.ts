@@ -1,4 +1,4 @@
-export enum OptionsLimitUnit { KB = 'kb', MB = 'mb', GB = 'gb', TB = 'tb' }
+// export enum OptionsLimitUnit { KB = 'kb', MB = 'mb', GB = 'gb', TB = 'tb' }
 
 // files 成员 DTO
 export interface Files {
@@ -13,7 +13,7 @@ export interface Files {
 }
 
 // options 成员 DTO
-export class Options {
+export interface Options {
   accept?: string | Array<string>;
   size?: OptionsSize;
   limit?: OptionsLimit;
@@ -31,7 +31,7 @@ export interface OptionsSize {
 export interface OptionsLimit {
   min?: number;
   max?: number;
-  unit?: OptionsLimitUnit;
+  unit?: string;
 }
 
 export interface OptionsLimitOutPut {

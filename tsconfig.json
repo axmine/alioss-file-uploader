@@ -1,15 +1,21 @@
 {
   "compilerOptions": {
     "module": "AMD",
+    // "module": "CommonJS",
     "target": "es5",
-    "lib": ["DOM", "ES2015", "ScriptHost", "ES5"],
+    "lib": ["DOM", "ES2015", "ScriptHost", "ES5", "ES2016.Array.Include"],
     "outDir": "lib",
-    "types": ["ali-oss"]
-    // "noImplicitAny": true,
-    // "removeComments": true,
+    "types": ["ali-oss"],
     // "preserveConstEnums": true,
     // "outFile": "lib/index.js",
+    "alwaysStrict": true,
+    "declaration": true,
+    // "removeComments": true,
+    "allowSyntheticDefaultImports": true,
     // "sourceMap": true,
-    // "alwaysStrict": true
+    // "incremental": true
   },
+  // "files": [
+  //   "index.ts"
+  // ]
 }
