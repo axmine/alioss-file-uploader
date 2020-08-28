@@ -1,4 +1,4 @@
-import { Files, Options, Sts, OptionsLimitUnit } from './src/Dto/Types.dto';
+import { Files, Options, Sts } from './src/Dto/Types.dto';
 import {
   formatAccept,
   formatLimit,
@@ -15,13 +15,13 @@ export class Alioss {
     this.options = {
       accept: '',
       size: { width: 0, height: 0, scale: 1, aspectRatio: '', error: 0 },
-      limit: { min: 0, max: 10, unit: OptionsLimitUnit.MB },
+      limit: { min: 0, max: 10, unit: 'mb' },
       https: true,
       multiple: false
     };
     this.files = [];
   }
-  upload (sts: Sts | Promise<Sts>, callBack: Function, options?:Options):void {
+  upload (sts: Sts | Promise<Sts>, callBack: Function, options: Options = {}):void {
     Object.assign(this.options, options);
     Object.assign(this.options, {
       size: formatSize(this.options.size),
