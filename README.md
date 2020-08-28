@@ -146,7 +146,7 @@ options 参数的部分示例：
 1. 修复大量bug
 2. callBack 增加错误代码
 3. 升级为ts, 完全兼容js es5+
-### classBack 返回数据格式如下：
+### callBack 返回数据格式如下：
 ```javascript
 // 上传中：
 {
