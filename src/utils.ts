@@ -1,7 +1,14 @@
 import * as OSS from 'ali-oss'
-import { Sts, StsConfig, OptionsSize, OptionsLimit, OptionsLimitOutPut, Options, realImageSize } from './Dto/Types.dto'
+import {
+  Sts,
+  StsConfig,
+  OptionsSize,
+  OptionsLimit,
+  OptionsLimitOutPut,
+  Options,
+  realImageSize
+} from './Dto/Types.dto'
 const lists = []
-
 // 格式化 options.size 的值
 export function formatSize(size: OptionsSize):OptionsSize {
   const s = Object.assign({ width: 0, height: 0, scale: 1, error: 0, aspectRatio: '' }, size)
@@ -62,7 +69,7 @@ export function formatLimit(val: OptionsLimit): OptionsLimitOutPut {
     throw new Error('if max > 0, then: min must less than max or equal max')
   }
   // const aUnit: Array<string> =
-  if (!['kb', 'mb', 'gb', 'tb'].some(e => e === unit.toLowerCase())) {
+  if (!['kb', 'mb', 'gb', 'tb'].includes(unit.toLowerCase())) {
     throw new Error('limit.unit must be：\'kb\'|\'mb\'|\'gb\'|\'tb\'')
   }
   const units = { kb: 1024, mb: 1048576, gb: 1073741824, tb: 1099511627776 }
@@ -187,13 +194,17 @@ async function multipartUpload (e, fn, alioss, options) {
       file = 'https:' + url.slice(5)
     }
     lists[e.index].url = file
+    lists[e.index].complete = true
+    lists.map(ele => {
+      const i = ele.url.indexOf(ele.name)
+      ele.url = ele.url.slice(0, i) + ele.name
+    })
     fn && fn({
       status: 'complete',
       file: lists[e.index],
       list: lists
     })
     // 标记为已完成
-    lists[e.index].complete = true
     // 检查是否全部完成了
     // this.files.forEach(e => e.complete)
     //   fileInput.removeEventListener('change')
