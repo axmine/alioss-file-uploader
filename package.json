@@ -1,6 +1,6 @@
 {
   "name": "alioss-file-uploader",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "支持上传验证的web端直传阿里云OSS的文件上传工具",
   "main": "index.js",
   "scripts": {
